@@ -1,0 +1,53 @@
+@page "/"
+@inject NavigationManager Nav
+
+<PageTitle>Qwertide - type fast, in C#</PageTitle>
+
+<section class="q-game">
+    <div class="q-hero q-rise">
+        <h1>Type the line.<br /><span class="accent">Watch the tide rise.</span></h1>
+        <p>
+            A passage appears. You type it. Qwertide tracks your words-per-minute and
+            accuracy live, then drops your run on a persistent leaderboard.
+        </p>
+    </div>
+
+    <div class="q-rise-2" style="display:flex;flex-direction:column;align-items:center;gap:24px;margin-top:40px;">
+        <div class="q-segment" role="group" aria-label="passage length">
+            @foreach (var d in _options)
+            {
+                <button class="@(_selected == d.Value ? "active" : null)"
+                        @onclick="() => _selected = d.Value">@d.Label</button>
+            }
+        </div>
+
+        <button @ref="_startBtn" class="q-btn q-btn-primary" @onclick="Start" style="font-size:1rem;padding:14px 32px;">
+            start typing
+            <span class="mono" style="opacity:0.6;font-size:0.85em;">↵</span>
+        </button>
+
+        <p class="mono" style="color:var(--text-faint);font-size:0.8rem;margin:0;">
+            desktop keyboard recommended
+        </p>
+    </div>
+</section>
+
+@code {
+    private Difficulty _selected = Difficulty.Medium;
+    private ElementReference _startBtn;
+
+    // Focus the primary CTA on load so the "↵" affordance works: Enter starts a run.
+    protected override async Task OnAfterRenderAsync(bool first)
+    {
+        if (first) await _startBtn.FocusAsync();
+    }
+
+    private readonly (string Label, Difficulty Value)[] _options =
+    {
+        ("short", Difficulty.Short),
+        ("paragraph", Difficulty.Medium),
+        ("code", Difficulty.Code),
+    };
+
+    private void Start() => Nav.NavigateTo($"play?d={(int)_selected}");
+}

@@ -1,0 +1,83 @@
+@page "/leaderboard"
+@inject ILeaderboardService Board
+@inject RunResultState Result
+@inject NavigationManager Nav
+
+<PageTitle>Qwertide - leaderboard</PageTitle>
+
+<section class="q-page-pad">
+    <div class="q-rise" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:28px;">
+        <div>
+            <div class="q-eyebrow">top runs</div>
+            <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);">The high tide.</h1>
+        </div>
+        <button class="q-btn q-btn-primary" @onclick='() => Nav.NavigateTo("play?d=1")'>take a run</button>
+    </div>
+
+    @if (_loading)
+    {
+        <div>
+            @for (var i = 0; i < 7; i++)
+            {
+                <div class="q-skeleton-row" style="width:@(100 - i * 6)%"></div>
+            }
+        </div>
+    }
+    else if (_scores.Count == 0)
+    {
+        <div class="q-empty">
+            <p>The board is empty. Be the first name on it.</p>
+            <button class="q-btn q-btn-primary" @onclick='() => Nav.NavigateTo("play?d=1")'
+                    style="margin-top:16px;">start typing</button>
+        </div>
+    }
+    else
+    {
+        <table class="q-table q-rise-2">
+            <thead>
+                <tr>
+                    <th class="q-rank">#</th>
+                    <th>player</th>
+                    <th class="num">wpm</th>
+                    <th class="num">acc</th>
+                    <th class="num">when</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < _scores.Count; i++)
+                {
+                    var s = _scores[i];
+                    var rank = i + 1;
+                    <tr class="@(s.Id == Result.LastSavedScoreId ? "is-you" : null)">
+                        <td class="q-rank @(rank <= 3 ? "top" : null)">@rank</td>
+                        <td>@s.PlayerName</td>
+                        <td class="num q-wpm">@s.Wpm</td>
+                        <td class="num">@s.Accuracy.ToString("0.0")%</td>
+                        <td class="num" style="color:var(--text-faint);">@Ago(s.CreatedAtUtc)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@code {
+    private List<Score> _scores = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var top = await Board.GetTopAsync(10);
+        _scores = top.ToList();
+        _loading = false;
+    }
+
+    private static string Ago(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 1) return "just now";
+        if (span.TotalHours < 1) return $"{(int)span.TotalMinutes}m ago";
+        if (span.TotalDays < 1) return $"{(int)span.TotalHours}h ago";
+        return $"{(int)span.TotalDays}d ago";
+    }
+}

@@ -1,0 +1,27 @@
+@* Renders the target passage one glyph per <span> (PDD §5.2). State per glyph:
+   correct / incorrect / current (caret rides it) / upcoming. Pure render: all
+   logic lives in Play.razor; this just paints what it is handed. *@
+
+<div class="q-passage @(Blurred ? "is-blurred" : null)" aria-hidden="true">
+    @for (var i = 0; i < Target.Length; i++)
+    {
+        var cls = ClassFor(i);
+        var ch = Target[i];
+        <span class="char @cls @(ch == ' ' ? "space" : null)" id="@(cls == "current" ? "q-caret" : null)">@(ch == ' ' ? ' ' : ch)</span>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Target { get; set; } = "";
+    [Parameter] public string Typed { get; set; } = "";
+    [Parameter] public bool Blurred { get; set; }
+
+    private string ClassFor(int i)
+    {
+        if (i < Typed.Length)
+            return Typed[i] == Target[i] ? "correct" : "incorrect";
+        if (i == Typed.Length && !Blurred)
+            return "current";
+        return string.Empty; // upcoming: inherits the dim --text-muted base
+    }
+}

@@ -1,0 +1,115 @@
+@page "/results"
+@inject RunResultState Result
+@inject ILeaderboardService Leaderboard
+@inject PassageLibrary Passages
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>Qwertide - your run</PageTitle>
+
+<section class="q-page-pad">
+    @if (!Result.HasResult)
+    {
+        <div class="q-empty">
+            <p>No run yet. Type a passage first.</p>
+            <button class="q-btn q-btn-primary" @onclick='() => Nav.NavigateTo("play?d=1")'
+                    style="margin-top:16px;">start a run</button>
+        </div>
+    }
+    else
+    {
+        <div class="q-rise">
+            <div class="q-eyebrow">run complete</div>
+            <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);">Here is the tide line.</h1>
+        </div>
+
+        <div class="q-result-grid q-rise-2">
+            <div class="q-result-cell">
+                <div class="big">@Result.Wpm<span class="unit">wpm</span></div>
+                <div class="cap">gross words / min</div>
+            </div>
+            <div class="q-result-cell">
+                <div class="big neutral">@Result.Accuracy.ToString("0.0")<span class="unit">%</span></div>
+                <div class="cap">accuracy</div>
+            </div>
+            <div class="q-result-cell">
+                <div class="big neutral">@Result.DurationSecs.ToString("0.0")<span class="unit">s</span></div>
+                <div class="cap">elapsed</div>
+            </div>
+        </div>
+
+        <div class="q-result-secondary q-rise-2" style="margin-bottom:36px;">
+            <span><b>@Result.Errors</b> errors</span>
+            <span><b>@Result.CharCount</b> characters</span>
+            <span><b>@((Result.CharCount / 5)).ToString()</b> words</span>
+        </div>
+
+        <div class="q-rise-3">
+            @if (_saved)
+            {
+                <div class="q-result-secondary" style="align-items:center;">
+                    <span style="color:var(--accent);">saved as <b>@_name</b>.</span>
+                    <a class="q-nav-link active" href="leaderboard">view leaderboard →</a>
+                </div>
+            }
+            else
+            {
+                <div class="q-save-row">
+                    <div class="q-field">
+                        <label for="player">display name</label>
+                        <input id="player" class="q-input" maxlength="30" placeholder="your handle"
+                               @bind="_name" @bind:event="oninput"
+                               @onkeydown="@(e => { if (e.Key == "Enter") _ = Save(); })" />
+                    </div>
+                    <button class="q-btn q-btn-primary" disabled="@(_saving || string.IsNullOrWhiteSpace(_name))"
+                            @onclick="Save">
+                        @(_saving ? "saving…" : "save to leaderboard")
+                    </button>
+                    <button class="q-btn q-btn-ghost" @onclick="PlayAgain">play again</button>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private string _name = "";
+    private bool _saving;
+    private bool _saved;
+
+    private async Task Save()
+    {
+        if (_saving || _saved || string.IsNullOrWhiteSpace(_name)) return;
+        _saving = true;
+        try
+        {
+            var saved = await Leaderboard.SubmitAsync(new Score
+            {
+                PlayerName = _name.Trim(),
+                Wpm = Result.Wpm,
+                Accuracy = Math.Round(Result.Accuracy, 1),
+                DurationSecs = Math.Round(Result.DurationSecs, 1),
+                PassageId = Result.PassageId,
+            });
+            Result.LastSavedScoreId = saved.Id;
+            _saved = true;
+            Snackbar.Add($"{_name.Trim()} placed on the board", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Could not save your score. Try again.", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void PlayAgain()
+    {
+        // Re-enter with the same difficulty the player just ran, not a hardcoded default.
+        var diff = (int)Passages.ById(Result.PassageId).Difficulty;
+        Result.Clear();
+        Nav.NavigateTo($"play?d={diff}");
+    }
+}

@@ -1,0 +1,171 @@
+@page "/play"
+@implements IDisposable
+@inject PassageLibrary Passages
+@inject RunResultState Result
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Qwertide - typing</PageTitle>
+
+<section class="q-game">
+    <StatBar Wpm="LiveWpm" Accuracy="LiveAccuracy" Seconds="LiveSeconds" Live="@_running" />
+
+    <div class="q-passage-wrap" @onclick="FocusInput">
+        <div id="q-passage-viewport" class="q-passage-viewport">
+            <PassageView Target="@_passage.Text" Typed="@_typed" Blurred="@(!_focused)" />
+        </div>
+
+        @if (!_focused)
+        {
+            <div class="q-focus-hint" @onclick="FocusInput">
+                <span><kbd>click</kbd> or press a key to start</span>
+            </div>
+        }
+
+        @* off-screen capture input keeps focus and receives the keystrokes *@
+        <input @ref="_input"
+               class="q-capture"
+               value="@_typed"
+               @oninput="OnInput"
+               @onkeydown="OnKeyDown"
+               @onfocus="() => _focused = true"
+               @onblur="() => _focused = false"
+               autocomplete="off" autocapitalize="off" autocorrect="off"
+               spellcheck="false" aria-label="typing input" />
+    </div>
+
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:44px;">
+        <button class="q-btn q-btn-ghost" @onclick="Restart">restart</button>
+        <button class="q-btn q-btn-ghost" @onclick='() => Nav.NavigateTo("")'>exit</button>
+        <span class="mono" style="color:var(--text-faint);font-size:0.78rem;align-self:center;">
+            esc to exit &nbsp;·&nbsp; tab+enter to restart
+        </span>
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "d")] public int DifficultyParam { get; set; }
+
+    private ElementReference _input;
+    private Passage _passage = default!;
+    private string _typed = "";
+    private int _total;      // keystrokes committed (incl. corrections)
+    private int _correct;    // keystrokes that matched the expected char
+    private bool _running;
+    private bool _focused;
+    private bool _finished;
+
+    private readonly System.Diagnostics.Stopwatch _watch = new();
+    private System.Timers.Timer? _ticker;
+
+    // Live display values (read straight from the stopwatch each render).
+    private double LiveSeconds => _watch.Elapsed.TotalSeconds;
+    private int LiveWpm => (int)Math.Round(TypingSession.GrossWpmFor(_typed.Length, LiveSeconds));
+    // Show 100% at rest (no errors made yet); the engine itself still returns 0 for 0 keystrokes.
+    private double LiveAccuracy => _total == 0 ? 100 : TypingSession.AccuracyFor(_correct, _total);
+
+    protected override void OnInitialized()
+    {
+        var diff = Enum.IsDefined(typeof(Difficulty), DifficultyParam)
+            ? (Difficulty)DifficultyParam
+            : Difficulty.Medium;
+        _passage = Passages.Random(diff);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool first)
+    {
+        if (first) await FocusInput();
+        // Keep the caret line in view as the passage scrolls past the window.
+        await JS.InvokeVoidAsync("qwertide.followCaret");
+    }
+
+    private async Task FocusInput()
+    {
+        if (!_finished) await _input.FocusAsync();
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape") Nav.NavigateTo("");
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        var val = e.Value as string ?? "";
+
+        // start the clock on the first committed character
+        if (!_running && val.Length > 0)
+        {
+            _running = true;
+            _watch.Start();
+            StartTicker();
+        }
+
+        // keystroke accounting: count a single forward character append.
+        // backspaces (shrink) and pastes/jumps are not counted as keystrokes.
+        if (val.Length == _typed.Length + 1 && val.StartsWith(_typed, StringComparison.Ordinal))
+        {
+            var pos = _typed.Length;
+            if (pos < _passage.Text.Length)
+            {
+                _total++;
+                if (val[pos] == _passage.Text[pos]) _correct++;
+            }
+        }
+
+        // never advance past the passage length
+        if (val.Length > _passage.Text.Length)
+            val = val[.._passage.Text.Length];
+
+        _typed = val;
+
+        if (_typed.Length >= _passage.Text.Length)
+            Finish();
+    }
+
+    private void StartTicker()
+    {
+        _ticker = new System.Timers.Timer(100) { AutoReset = true };
+        _ticker.Elapsed += async (_, _) => await InvokeAsync(StateHasChanged);
+        _ticker.Start();
+    }
+
+    private void StopTicker()
+    {
+        _ticker?.Stop();
+        _ticker?.Dispose();
+        _ticker = null;
+    }
+
+    private void Finish()
+    {
+        _finished = true;
+        _running = false;
+        _watch.Stop();
+        StopTicker();
+
+        var secs = _watch.Elapsed.TotalSeconds;
+        Result.Wpm = (int)Math.Round(TypingSession.GrossWpmFor(_passage.Text.Length, secs));
+        Result.Accuracy = TypingSession.AccuracyFor(_correct, _total);
+        Result.DurationSecs = secs;
+        Result.Errors = Math.Max(0, _total - _correct);
+        Result.CharCount = _passage.Text.Length;
+        Result.PassageId = _passage.Id;
+        Result.HasResult = true;
+
+        Nav.NavigateTo("results");
+    }
+
+    private async Task Restart()
+    {
+        StopTicker();
+        _watch.Reset();
+        _typed = "";
+        _total = _correct = 0;
+        _running = _finished = false;
+        _passage = Passages.Random(_passage.Difficulty);
+        await FocusInput();
+    }
+
+    public void Dispose() => StopTicker();
+}

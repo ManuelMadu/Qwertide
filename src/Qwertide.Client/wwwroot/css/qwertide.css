@@ -1,0 +1,485 @@
+/* ============================================================================
+   QWERTIDE — Terminal-mono design system
+   ----------------------------------------------------------------------------
+   Aesthetic: dark terminal, single warm accent, mono for type + numbers.
+   Honesty note: this is hand-built CSS, not a design-system package. MudBlazor
+   provides the providers/snackbar/form primitives; the game canvas, caret, and
+   stat bar are custom because Material defaults fight the terminal language.
+
+   LOCKS (audited before shipping):
+   - Color: ONE accent (--accent, amber). Red (--error) is reserved strictly for
+     typing errors (real semantic state), never decoration. No second accent.
+   - Shape: interactive = 4px radius, panels = 8px, caret = 1px. One scale.
+   - Theme: dark only, locked page-wide. No section inverts.
+   - Em-dash: zero. Hyphens only.
+============================================================================ */
+
+:root {
+  /* surfaces */
+  --bg:          #0e0e10;   /* page, off-black (never #000) */
+  --bg-elev:     #161619;   /* panels */
+  --bg-elev-2:   #1d1d21;   /* raised controls */
+  --border:      #2a2a31;   /* visible hairline */
+  --border-soft: #1f1f25;   /* faint divider */
+
+  /* text */
+  --text:        #d4d4d8;   /* default body */
+  --text-bright: #f4f4f5;   /* correctly-typed glyphs, headings */
+  --text-muted:  #6b6b73;   /* upcoming/untyped glyphs (large text, passes AA) */
+  --text-faint:  #7c7c83;   /* meta, captions, small labels (raised to clear WCAG AA on small text) */
+
+  /* accent (locked, single) */
+  --accent:      #e2b340;   /* amber: caret, primary CTA, active stat */
+  --accent-dim:  #8a6d28;
+  --accent-soft: rgba(226, 179, 64, 0.14);   /* subtle wash, NOT a neon glow */
+
+  /* semantic error state ONLY */
+  --error:       #e5484d;
+  --error-bg:    rgba(229, 72, 77, 0.13);
+
+  /* type */
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", monospace;
+  --font-ui:   "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* shape scale (locked) */
+  --r-interactive: 4px;
+  --r-panel: 8px;
+
+  /* motion */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 0.14s;
+  --t-mid: 0.28s;
+
+  --shell-max: 1100px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  min-height: 100dvh;          /* never h-screen: avoids iOS address-bar jump */
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-bright);
+  margin: 0;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.mono { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
+.tnum { font-variant-numeric: tabular-nums; } /* numbers don't jitter while live */
+
+/* ---- App shell ---------------------------------------------------------- */
+.q-shell {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.q-nav {
+  height: 64px;                /* cap: <= 80px, single line */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-soft);
+}
+.q-brand {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-size: 1.05rem;
+  color: var(--text-bright);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+}
+.q-brand .q-brand-accent { color: var(--accent); }
+.q-nav-links { display: flex; gap: 28px; align-items: center; }
+.q-nav-link {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  transition: color var(--t-fast) var(--ease);
+  font-family: var(--font-mono);
+}
+.q-nav-link:hover { color: var(--text); }
+.q-nav-link.active { color: var(--accent); }
+
+.q-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.q-footer {
+  border-top: 1px solid var(--border-soft);
+  padding: 18px 0;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+}
+
+/* ---- Buttons (one shape scale, amber primary) --------------------------- */
+.q-btn {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 0.92rem;
+  border-radius: var(--r-interactive);
+  padding: 11px 22px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease),
+              background var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+.q-btn:active { transform: translateY(1px); }       /* tactile push */
+
+/* primary: amber fill, dark text. Contrast checked: #0e0e10 on #e2b340 ~ 9:1 */
+.q-btn-primary {
+  background: var(--accent);
+  color: #14110a;
+  font-weight: 600;
+}
+.q-btn-primary:hover { background: #eebf53; }
+
+/* secondary: ghost with border */
+.q-btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+.q-btn-ghost:hover { border-color: var(--text-muted); color: var(--text-bright); }
+
+.q-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- The typing canvas (signature surface) ------------------------------ */
+.q-game {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100dvh - 64px);   /* fill viewport under nav, no scroll cue */
+  padding: 40px 0 80px;
+}
+
+.q-passage-wrap { position: relative; }
+
+/* fixed-height window: ~3 lines visible; longer passages scroll the caret line
+   into view (see qwertide.js followCaret). Owns the font-size + width so the
+   line-height math that sizes the window stays correct. */
+.q-passage-viewport {
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-mono);     /* so 60ch below = 60 mono chars exactly */
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  height: calc(1.85em * 3);          /* line-height (1.85) x 3 visible lines */
+  width: min(60ch, 100%);            /* definite mono box: text wraps at 60 chars */
+  margin: 0 auto;
+  /* soft fade only at the bottom so upcoming lines ease in; the first line
+     (short passages pin to the top) stays crisp. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.6em), transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 calc(100% - 1.6em), transparent 100%);
+}
+
+/* the passage: each glyph is a span; caret rides the current one */
+.q-passage {
+  font-family: var(--font-mono);
+  font-size: inherit;                /* from the viewport */
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);          /* upcoming text reads dim */
+  width: 100%;                       /* fill the viewport box and wrap within it */
+  white-space: normal;
+  overflow-wrap: break-word;
+  user-select: none;
+  outline: none;
+  will-change: transform;
+  transition: transform 0.18s var(--ease);   /* smooth line-scroll (see followCaret) */
+}
+
+.char { position: relative; transition: color var(--t-fast) linear; }
+.char.correct   { color: var(--text-bright); }
+.char.incorrect { color: var(--error); background: var(--error-bg); border-radius: 2px; }
+/* space typed wrong gets an underline so it is visible even with no glyph */
+.char.incorrect.space { background: var(--error-bg); text-decoration: underline; text-decoration-color: var(--error); }
+
+/* caret: 2px amber bar at the left edge of the current glyph */
+.char.current::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0.14em;
+  bottom: 0.14em;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  animation: caret-blink 1.05s steps(1) infinite;
+}
+@keyframes caret-blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
+
+/* blurred / waiting state before focus */
+.q-passage.is-blurred { filter: blur(4px); opacity: 0.55; transition: filter var(--t-mid) var(--ease); }
+.q-focus-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  color: var(--text);
+  cursor: pointer;
+}
+.q-focus-hint kbd {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-interactive);
+  padding: 2px 8px;
+  margin: 0 4px;
+  font-size: 0.82rem;
+}
+
+/* hidden capture input (off-screen, keeps focus) */
+.q-capture {
+  position: absolute;
+  opacity: 0;
+  width: 1px; height: 1px;
+  padding: 0; border: 0;
+  left: -9999px;
+}
+
+/* ---- Live stat bar ------------------------------------------------------ */
+.q-statbar {
+  display: flex;
+  gap: 36px;
+  justify-content: center;
+  margin-bottom: 44px;
+  min-height: 56px;
+}
+.q-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.q-stat-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  line-height: 1;
+}
+.q-stat-value.is-live { color: var(--accent); }
+.q-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* difficulty / length selector pills */
+.q-segment {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--r-interactive);
+  overflow: hidden;
+  background: var(--bg-elev);
+}
+.q-segment button {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.q-segment button:hover { color: var(--text); }
+.q-segment button.active { background: var(--accent-soft); color: var(--accent); }
+.q-segment button:not(:last-child) { border-right: 1px solid var(--border-soft); }
+
+/* ---- Generic page header (results, leaderboard) ------------------------- */
+.q-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.q-page-pad { padding: 56px 0 80px; }
+
+/* ---- Results ------------------------------------------------------------ */
+.q-result-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+  margin: 32px 0;
+}
+.q-result-cell {
+  background: var(--bg-elev);
+  padding: 28px 26px;
+}
+.q-result-cell .big {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--accent);
+}
+.q-result-cell .big.neutral { color: var(--text-bright); }
+.q-result-cell .unit { font-size: 0.4em; color: var(--text-faint); margin-left: 6px; }
+.q-result-cell .cap {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-top: 10px;
+}
+.q-result-secondary {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.q-result-secondary b { color: var(--text-bright); font-weight: 600; }
+
+.q-save-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-top: 8px; }
+.q-field { display: flex; flex-direction: column; gap: 6px; }
+.q-field label {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.q-input {
+  font-family: var(--font-mono);
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-interactive);
+  color: var(--text-bright);
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  min-width: 220px;
+  transition: border-color var(--t-fast) var(--ease);
+}
+.q-input::placeholder { color: var(--text-faint); }
+.q-input:focus { outline: none; border-color: var(--accent); }
+
+/* ---- Leaderboard -------------------------------------------------------- */
+.q-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); }
+.q-table thead th {
+  text-align: left;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-weight: 500;
+  padding: 0 16px 14px;
+  border-bottom: 1px solid var(--border);   /* single divider above group, not per-row top+bottom */
+}
+.q-table thead th.num, .q-table tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.q-table tbody td {
+  padding: 15px 16px;
+  font-size: 0.95rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border-soft);  /* one hairline between rows only */
+}
+.q-table tbody tr { transition: background var(--t-fast) var(--ease); }
+.q-table tbody tr:hover { background: var(--bg-elev); }
+.q-table tbody tr.is-you { background: var(--accent-soft); }
+.q-table tbody tr.is-you td { color: var(--text-bright); }
+.q-rank { color: var(--text-faint); width: 3ch; }
+.q-rank.top { color: var(--accent); font-weight: 700; }
+.q-wpm { color: var(--accent); font-weight: 600; }
+
+/* empty + loading states */
+.q-empty {
+  text-align: center;
+  padding: 64px 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.q-skeleton-row {
+  height: 18px;
+  margin: 18px 16px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--bg-elev) 25%, var(--bg-elev-2) 50%, var(--bg-elev) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s linear infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ---- Hero / start type lockup ------------------------------------------- */
+.q-hero { text-align: center; max-width: 56ch; margin: 0 auto; }
+.q-hero h1 {
+  font-family: var(--font-mono);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+.q-hero h1 .accent { color: var(--accent); }
+.q-hero p {
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  max-width: 48ch;
+  margin: 18px auto 0;
+}
+
+/* entry transitions (gated by reduced-motion below) */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.q-rise { animation: rise 0.55s var(--ease) both; }
+.q-rise-2 { animation: rise 0.55s var(--ease) 0.08s both; }
+.q-rise-3 { animation: rise 0.55s var(--ease) 0.16s both; }
+
+/* ---- Mobile collapse (explicit; desktop is primary target) -------------- */
+@media (max-width: 768px) {
+  .q-shell { padding: 0 18px; }
+  .q-result-grid { grid-template-columns: 1fr; }
+  .q-statbar { gap: 24px; }
+  .q-passage-viewport { font-size: 1.3rem; }
+  .q-nav-links { gap: 18px; }
+}
+
+/* ---- Reduced motion (mandatory, MOTION_INTENSITY 6) --------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .char.current::before { animation: none; opacity: 1; }
+  .q-skeleton-row { animation: none; }
+  .q-rise, .q-rise-2, .q-rise-3 { animation: none; }
+  .q-passage { transition: none; }
+  .q-passage.is-blurred { transition: none; }
+  * { scroll-behavior: auto !important; }
+}

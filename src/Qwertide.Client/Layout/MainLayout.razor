@@ -1,0 +1,26 @@
+@inherits LayoutComponentBase
+@using Qwertide.Client.Theme
+
+<MudThemeProvider Theme="@QwertideTheme.Instance" IsDarkMode="true" />
+<MudSnackbarProvider />
+
+<header class="q-shell">
+    <nav class="q-nav">
+        <a href="" class="q-brand">qwertide<span class="q-brand-accent">_</span></a>
+        <div class="q-nav-links">
+            <NavLink class="q-nav-link" href="" Match="NavLinkMatch.All">play</NavLink>
+            <NavLink class="q-nav-link" href="leaderboard">leaderboard</NavLink>
+            <a class="q-nav-link" href="https://github.com/ManuelMadu/qwertide" target="_blank" rel="noopener">source</a>
+        </div>
+    </nav>
+</header>
+
+<main class="q-main q-shell">
+    @Body
+</main>
+
+<footer class="q-shell">
+    <div class="q-footer">
+        built in c# / blazor webassembly &nbsp;·&nbsp; manuel c. madubugini
+    </div>
+</footer>

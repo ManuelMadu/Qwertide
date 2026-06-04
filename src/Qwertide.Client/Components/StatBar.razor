@@ -1,0 +1,24 @@
+@* Live stat readout: WPM / accuracy / time. Mono + tabular-nums so digits
+   don't jitter as they tick. `Live` tints the values amber while a run is active. *@
+
+<div class="q-statbar" role="status" aria-live="off">
+    <div class="q-stat">
+        <span class="q-stat-value @(Live ? "is-live" : null)">@Wpm</span>
+        <span class="q-stat-label">wpm</span>
+    </div>
+    <div class="q-stat">
+        <span class="q-stat-value @(Live ? "is-live" : null)">@Accuracy.ToString("0")<span style="font-size:0.6em;opacity:0.6">%</span></span>
+        <span class="q-stat-label">acc</span>
+    </div>
+    <div class="q-stat">
+        <span class="q-stat-value">@Seconds.ToString("0.0")<span style="font-size:0.6em;opacity:0.6">s</span></span>
+        <span class="q-stat-label">time</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Wpm { get; set; }
+    [Parameter] public double Accuracy { get; set; }
+    [Parameter] public double Seconds { get; set; }
+    [Parameter] public bool Live { get; set; }
+}

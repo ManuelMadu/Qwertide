@@ -30,6 +30,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<QwertideDbContext>();
     db.Database.Migrate();
+    DbSeeder.Seed(db);
 }
 
 if (app.Environment.IsDevelopment())

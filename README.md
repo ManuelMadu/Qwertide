@@ -9,10 +9,6 @@ JavaScript game logic), and the leaderboard is served by a separate **ASP.NET
 Core Web API** backed by **EF Core**. It is a focused, full-stack, deployed .NET
 app built as a portfolio piece for a Junior Software Developer (C#/.NET) role.
 
-<!-- Add a screenshot of the Play screen here once captured:
-![Qwertide play screen](docs/screenshot.png)
--->
-
 ## Features
 
 - **Live per-keystroke feedback.** Each character is highlighted correct or

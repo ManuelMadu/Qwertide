@@ -48,3 +48,8 @@ coverage*.info
 Thumbs.db
 *.swp
 *~
+
+# SQLite runtime database (schema lives in migrations)
+*.db
+*.db-shm
+*.db-wal

@@ -1,0 +1,19 @@
+@Qwertide.Api_HostAddress = http://localhost:5229
+
+### Top leaderboard entries
+GET {{Qwertide.Api_HostAddress}}/api/scores?top=10
+Accept: application/json
+
+### Submit a score
+POST {{Qwertide.Api_HostAddress}}/api/scores
+Content-Type: application/json
+
+{
+  "playerName": "kayl_okafor",
+  "wpm": 138,
+  "accuracy": 98.1,
+  "durationSecs": 21.4,
+  "passageId": 1
+}
+
+###

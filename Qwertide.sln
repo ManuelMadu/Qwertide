@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DA873388-5DB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Qwertide.Client", "src\Qwertide.Client\Qwertide.Client.csproj", "{161ECCE8-211A-453D-A8F9-6041EA21E9BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Qwertide.Tests", "src\Qwertide.Tests\Qwertide.Tests.csproj", "{53921AF3-17B8-4895-A143-30237358DCCC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,8 +22,13 @@ Global
 		{161ECCE8-211A-453D-A8F9-6041EA21E9BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{161ECCE8-211A-453D-A8F9-6041EA21E9BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{161ECCE8-211A-453D-A8F9-6041EA21E9BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53921AF3-17B8-4895-A143-30237358DCCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53921AF3-17B8-4895-A143-30237358DCCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53921AF3-17B8-4895-A143-30237358DCCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53921AF3-17B8-4895-A143-30237358DCCC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{161ECCE8-211A-453D-A8F9-6041EA21E9BC} = {DA873388-5DB1-4FFC-A0D1-E1EB1B253EE7}
+		{53921AF3-17B8-4895-A143-30237358DCCC} = {DA873388-5DB1-4FFC-A0D1-E1EB1B253EE7}
 	EndGlobalSection
 EndGlobal

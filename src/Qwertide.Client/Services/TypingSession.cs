@@ -58,4 +58,32 @@ public sealed class TypingSession
         if (totalKeystrokes <= 0) return 0;
         return (double)correctKeystrokes / totalKeystrokes * 100.0;
     }
+
+    /// <summary>
+    /// Keystroke accounting for one input event. Counts EVERY new character appended
+    /// to <paramref name="previousTyped"/> in this event - not just one - comparing
+    /// each against the expected character in <paramref name="target"/>. A fast typist
+    /// (or autocorrect / IME) can commit several characters between input ticks; each
+    /// of those is a real keystroke and must count toward the accuracy denominator.
+    ///
+    /// Only a forward extension of what was already typed counts: backspaces (the value
+    /// shrank) and edits that don't continue the prior text contribute nothing. Positions
+    /// past the end of <paramref name="target"/> are ignored. Returns the keystrokes to
+    /// add to the running totals.
+    /// </summary>
+    public static (int Total, int Correct) CountKeystrokes(string previousTyped, string newValue, string target)
+    {
+        if (newValue.Length <= previousTyped.Length) return (0, 0);
+        if (!newValue.StartsWith(previousTyped, StringComparison.Ordinal)) return (0, 0);
+
+        var end = Math.Min(newValue.Length, target.Length);
+        var total = 0;
+        var correct = 0;
+        for (var pos = previousTyped.Length; pos < end; pos++)
+        {
+            total++;
+            if (newValue[pos] == target[pos]) correct++;
+        }
+        return (total, correct);
+    }
 }

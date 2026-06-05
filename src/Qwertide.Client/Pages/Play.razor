@@ -101,17 +101,12 @@
             StartTicker();
         }
 
-        // keystroke accounting: count a single forward character append.
-        // backspaces (shrink) and pastes/jumps are not counted as keystrokes.
-        if (val.Length == _typed.Length + 1 && val.StartsWith(_typed, StringComparison.Ordinal))
-        {
-            var pos = _typed.Length;
-            if (pos < _passage.Text.Length)
-            {
-                _total++;
-                if (val[pos] == _passage.Text[pos]) _correct++;
-            }
-        }
+        // keystroke accounting: count every newly appended character (fast typists
+        // can commit more than one between ticks). Backspaces and non-append edits
+        // count nothing. See TypingSession.CountKeystrokes.
+        var (added, correct) = TypingSession.CountKeystrokes(_typed, val, _passage.Text);
+        _total += added;
+        _correct += correct;
 
         // never advance past the passage length
         if (val.Length > _passage.Text.Length)

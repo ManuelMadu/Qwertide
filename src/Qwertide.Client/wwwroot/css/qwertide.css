@@ -209,13 +209,15 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: 0.01em;
   color: var(--text-muted);          /* upcoming text reads dim */
   width: 100%;                       /* fill the viewport box and wrap within it */
-  white-space: normal;
-  overflow-wrap: break-word;
+  white-space: normal;               /* lines break at the spaces between words... */
   user-select: none;
   outline: none;
   will-change: transform;
   transition: transform 0.18s var(--ease);   /* smooth line-scroll (see followCaret) */
 }
+
+/* ...and a word's glyphs are kept on one line, so a word never splits mid-glyph */
+.q-word { white-space: nowrap; }
 
 .char { position: relative; transition: color var(--t-fast) linear; }
 .char.correct   { color: var(--text-bright); }

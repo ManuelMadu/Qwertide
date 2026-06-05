@@ -1,13 +1,29 @@
-@* Renders the target passage one glyph per <span> (PDD §5.2). State per glyph:
-   correct / incorrect / current (caret rides it) / upcoming. Pure render: all
-   logic lives in Play.razor; this just paints what it is handed. *@
+@* Renders the target passage one glyph per <span> (PDD §5.2). Consecutive
+   non-space glyphs are grouped into a .q-word wrapper (white-space: nowrap) so a
+   word never breaks across lines; the passage wraps only at the standalone space
+   spans between words. State per glyph: correct / incorrect / current (caret rides
+   it) / upcoming. Pure render: all logic lives in Play.razor. *@
 
 <div class="q-passage @(Blurred ? "is-blurred" : null)" aria-hidden="true">
-    @for (var i = 0; i < Target.Length; i++)
+    @{ var i = 0; }
+    @while (i < Target.Length)
     {
-        var cls = ClassFor(i);
-        var ch = Target[i];
-        <span class="char @cls @(ch == ' ' ? "space" : null)" id="@(cls == "current" ? "q-caret" : null)">@(ch == ' ' ? ' ' : ch)</span>
+        if (Target[i] == ' ')
+        {
+            var s = i;
+            <span class="char space @ClassFor(s)" id="@CaretId(s)">@(' ')</span>
+            i++;
+        }
+        else
+        {
+            var start = i;
+            while (i < Target.Length && Target[i] != ' ') { i++; }
+            var end = i;
+            <span class="q-word">@for (var j = start; j < end; j++)
+                {
+                    <span class="char @ClassFor(j)" id="@CaretId(j)">@Target[j]</span>
+                }</span>
+        }
     }
 </div>
 
@@ -21,7 +37,9 @@
         if (i < Typed.Length)
             return Typed[i] == Target[i] ? "correct" : "incorrect";
         if (i == Typed.Length && !Blurred)
-            return "current";
-        return string.Empty; // upcoming: inherits the dim --text-muted base
+            return "current"; // caret rides this glyph
+        return string.Empty;  // upcoming: inherits the dim --text-muted base
     }
+
+    private string? CaretId(int i) => (i == Typed.Length && !Blurred) ? "q-caret" : null;
 }

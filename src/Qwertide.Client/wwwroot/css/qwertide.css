@@ -81,6 +81,12 @@ h1, h2, h3 {
 
 a { color: inherit; text-decoration: none; }
 
+/* Blazor's <FocusOnNavigate> programmatically focuses the page <h1> on each route
+   change (a screen-reader aid). Such elements get tabindex="-1" and would show the
+   browser's default focus ring; suppress it since they are never keyboard-tabbable.
+   Real interactive controls keep their :focus-visible outline (see .q-btn). */
+[tabindex="-1"]:focus { outline: none; }
+
 .mono { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
 .tnum { font-variant-numeric: tabular-nums; } /* numbers don't jitter while live */
 

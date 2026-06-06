@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore Qwertide.sln
+
+      - name: Build
+        run: dotnet build Qwertide.sln --configuration Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test Qwertide.sln --configuration Release --no-build --verbosity normal

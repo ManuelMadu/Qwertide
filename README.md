@@ -1,5 +1,7 @@
 # Qwertide
 
+[![CI](https://github.com/ManuelMadu/Qwertide/actions/workflows/ci.yml/badge.svg)](https://github.com/ManuelMadu/Qwertide/actions/workflows/ci.yml)
+
 A browser-based typing-speed game built end to end in C# / .NET. A passage
 appears, you type it, and Qwertide tracks your words-per-minute and accuracy
 live before dropping your run onto a persistent leaderboard.

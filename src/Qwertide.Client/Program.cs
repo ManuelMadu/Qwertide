@@ -27,7 +27,14 @@ builder.Services.AddSingleton<PassageLibrary>();
 // right host; LocalLeaderboardService remains as an offline localStorage fallback
 // behind the same interface. A dedicated HttpClient is used because the API lives
 // on a different origin than the WASM host.
-var apiBaseUrl = builder.Configuration["Api:BaseUrl"] ?? builder.HostEnvironment.BaseAddress;
+// An empty/absent Api:BaseUrl means "same origin as the host" - the case when
+// the API serves this client in production. Development config points it at the
+// separately-running API (see wwwroot/appsettings.Development.json).
+var apiBaseUrl = builder.Configuration["Api:BaseUrl"];
+if (string.IsNullOrWhiteSpace(apiBaseUrl))
+{
+    apiBaseUrl = builder.HostEnvironment.BaseAddress;
+}
 builder.Services.AddScoped<ILeaderboardService>(_ =>
     new ApiLeaderboardService(new HttpClient { BaseAddress = new Uri(apiBaseUrl) }));
 

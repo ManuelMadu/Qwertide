@@ -40,8 +40,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Serve the Blazor WASM client this API is bundled with (single-service deploy).
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
+
 app.UseCors(ClientCors);
 app.UseAuthorization();
+
 app.MapControllers();
+// Any non-API route falls through to the SPA entry point so client-side
+// routing (/play, /results, /leaderboard) works on a full-page load.
+app.MapFallbackToFile("index.html");
 
 app.Run();

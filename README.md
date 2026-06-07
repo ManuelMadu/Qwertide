@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/ManuelMadu/Qwertide/actions/workflows/ci.yml/badge.svg)](https://github.com/ManuelMadu/Qwertide/actions/workflows/ci.yml)
 
+**Live:** https://qwertide.azurewebsites.net
+
 A browser-based typing-speed game built end to end in C# / .NET. A passage
 appears, you type it, and Qwertide tracks your words-per-minute and accuracy
 live before dropping your run onto a persistent leaderboard.
@@ -21,8 +23,8 @@ app built as a portfolio piece for a Junior Software Developer (C#/.NET) role.
   are not forced to stop and fix them, matching common typing-test convention.
 - **Three passage lengths.** Short warm-ups, full paragraphs, and real C# code
   snippets.
-- **Persistent leaderboard.** Top runs survive a refresh. (Client-side store
-  today; swaps to the API at M5 behind one unchanged interface.)
+- **Persistent leaderboard.** Top runs are submitted to the API and survive
+  across sessions, served from a SQLite database through EF Core.
 - **Pure, unit-tested scoring engine.** All WPM and accuracy math lives in a
   UI-free C# class with xUnit coverage.
 - **Accessible, restrained design.** A dark terminal-mono theme, WCAG AA text
@@ -34,10 +36,10 @@ app built as a portfolio piece for a Junior Software Developer (C#/.NET) role.
 | ------------ | -------------------------------------------------- |
 | Language     | C# (.NET 8)                                        |
 | Front-end    | Blazor WebAssembly + MudBlazor                     |
-| Back-end     | ASP.NET Core Web API *(in progress, M4)*           |
-| ORM / data   | EF Core 8 + SQLite *(in progress, M4)*             |
+| Back-end     | ASP.NET Core Web API                               |
+| ORM / data   | EF Core 8 + SQLite                                 |
 | Testing      | xUnit + FluentAssertions                           |
-| Hosting      | Azure App Service *(planned, M7)*                  |
+| Hosting      | Azure App Service (Linux, single service)          |
 
 ## Architecture
 
@@ -49,12 +51,13 @@ Qwertide.sln
 └── src/
     ├── Qwertide.Client   Blazor WebAssembly UI + pure scoring engine
     ├── Qwertide.Tests    xUnit tests for the scoring engine
-    └── Qwertide.Api      ASP.NET Core leaderboard API  (planned, M4)
+    └── Qwertide.Api      ASP.NET Core leaderboard API + EF Core
 ```
 
-The leaderboard sits behind an `ILeaderboardService` contract. v1 ships a
-`localStorage`-backed implementation; M5 swaps in an `HttpClient` one that talks
-to the API, with no UI changes.
+The leaderboard sits behind an `ILeaderboardService` contract. The client talks
+to the API through an `HttpClient`-backed implementation, so the UI never depends
+on the transport directly. In production the API also hosts the published Blazor
+client, so the whole app deploys as a single Azure App Service.
 
 ### The scoring engine
 
@@ -99,17 +102,23 @@ Covers the WPM and accuracy math plus the edge cases that break naive
 implementations: zero elapsed time, all errors, empty input, and multi-character
 input events.
 
+## Deployment
+
+The app runs live on Azure App Service as a single Linux service: the ASP.NET
+Core API hosts both the leaderboard endpoints and the published Blazor client.
+The full step-by-step process is documented in [DEPLOY.md](DEPLOY.md).
+
 ## Project status
 
-v1 is a work in progress. Done and in progress:
+v1 is complete and deployed:
 
 - [x] **M1** Core game: passage render, keystroke capture, live highlight, timer
 - [x] **M2** Scoring engine wired into the results screen
 - [x] **M3** xUnit tests for WPM, accuracy, and edge cases
-- [ ] **M4** Leaderboard API: ASP.NET Core + EF Core + SQLite
-- [ ] **M5** Connect the client to the API
+- [x] **M4** Leaderboard API: ASP.NET Core + EF Core + SQLite
+- [x] **M5** Connect the client to the API
 - [x] **M6** Styling, difficulty levels, reduced-motion support
-- [ ] **M7** Deploy to Azure App Service (public URL)
+- [x] **M7** Deploy to Azure App Service (public URL)
 
 ## Why this project
 

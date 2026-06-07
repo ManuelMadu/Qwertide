@@ -16,6 +16,7 @@ bld/
 
 # ---- Blazor / WASM publish ----
 publish/
+app.zip
 *.user
 *.suo
 *.userprefs

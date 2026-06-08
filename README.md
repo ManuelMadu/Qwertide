@@ -4,15 +4,16 @@
 
 **Live:** https://qwertide.azurewebsites.net
 
-A browser-based typing-speed game built end to end in **C# / .NET 8**. A passage
-appears, you type it, and Qwertide tracks your words-per-minute and accuracy live —
-then drops your run onto a persistent, API-backed leaderboard.
+A browser-based typing game written end to end in **C# / .NET 8**. A passage shows
+up, you type it, and Qwertide tracks your words per minute and accuracy as you go,
+then saves your run to a leaderboard backed by a real API.
 
-The entire front-end and game loop are **Blazor WebAssembly** (the scoring engine
-is pure C#; the only JavaScript is a 22-line caret-positioning helper). The
-leaderboard is served by an **ASP.NET Core Web API** backed by **EF Core + SQLite**.
-In production both ship as a **single Azure App Service**. It was built as a
-focused, production-minded portfolio piece for a Junior C#/.NET role.
+The front-end and game loop are all **Blazor WebAssembly**. The scoring is pure C#;
+the only JavaScript is a 22-line helper that positions the caret. The leaderboard
+runs on an **ASP.NET Core Web API** with **EF Core and SQLite** behind it. In
+production the two ship together as one **Azure App Service**. I built it as a
+portfolio piece for a junior C#/.NET role, and tried to keep it small but
+production-minded rather than a pile of half-finished features.
 
 ---
 
@@ -42,13 +43,13 @@ focused, production-minded portfolio piece for a Junior C#/.NET role.
 
 ## Overview
 
-Qwertide is a full-stack, single-page typing test. The interesting engineering is
-deliberately *not* in the UI: the words-per-minute and accuracy math is isolated in
-a pure, dependency-free domain class so it can be unit-tested directly, and the
-leaderboard is a small but properly-hardened REST API rather than a localStorage
-hack. The project's goal is to demonstrate the complete C#/.NET stack — WASM
-front-end, Web API, ORM with migrations, a tested domain layer, CI, and a public
-cloud deployment — in one coherent, honestly-scoped app.
+Qwertide is a full-stack, single-page typing test. Most of the actual engineering
+sits behind the UI rather than in it. The WPM and accuracy math lives in a pure,
+dependency-free class so it can be unit-tested on its own, and the leaderboard is a
+small REST API with real input validation and rate limiting instead of a
+localStorage shortcut. The point of the project is to show the whole C#/.NET stack
+working together: a WASM front-end, a Web API, an ORM with migrations, a tested
+domain layer, CI, and a live cloud deploy.
 
 ## Key features
 
@@ -90,16 +91,16 @@ without a browser and the client depending on the API only through an interface.
 
 **Key decisions**
 
-- **Pure domain layer.** All metric math lives in `TypingSession` as static,
-  UI-free functions, so the test project references it directly and the Blazor
-  component owns only rendering.
-- **Interface-driven leaderboard.** The UI codes against `ILeaderboardService`;
-  the active implementation (`ApiLeaderboardService`) is swapped in via DI without
-  any UI changes. A second `localStorage` implementation exists to demonstrate the
-  abstraction (it is not currently wired in as a runtime fallback).
+- **Pure domain layer.** All the metric math lives in `TypingSession` as static,
+  UI-free functions, so the test project can reference it directly and the Blazor
+  component only has to worry about rendering.
+- **Interface-driven leaderboard.** The UI codes against `ILeaderboardService`, and
+  the active implementation (`ApiLeaderboardService`) gets swapped in via DI without
+  touching the UI. There's also a second `localStorage` implementation that shows
+  the abstraction works; it isn't currently wired in as a runtime fallback.
 - **Single-service hosting.** In production the API serves the published WASM
-  client and falls back to `index.html` for client-side routes, so there is one
-  deployable, one origin, and no production CORS.
+  client and falls back to `index.html` for client-side routes. That leaves one
+  deployable, one origin, and no CORS to worry about in prod.
 
 ### The scoring engine
 
@@ -113,9 +114,9 @@ TypingSession.GrossWpmFor(charsTyped: 50, elapsedSeconds: 60); // -> 10
 TypingSession.AccuracyFor(correctKeystrokes: 45, totalKeystrokes: 50); // -> 90
 ```
 
-`CountKeystrokes` counts *every* character committed in a single input event
-(a fast typist or IME can commit several between ticks), so the accuracy
-denominator is never under-counted.
+`CountKeystrokes` counts every character committed in a single input event, since a
+fast typist or an IME can commit several between ticks. That way the accuracy
+denominator never gets under-counted.
 
 ## Tech stack
 
@@ -186,8 +187,8 @@ that break naive implementations: zero elapsed time, all-errors, empty input,
 multi-character input events, and derived-metric state. Tests target the pure
 domain layer directly, so they run fast and need no browser or HTTP host.
 
-**Scope, stated honestly:** test coverage is the scoring engine. API/controller
-integration tests, component tests, and end-to-end tests are not yet present (see
+What's actually covered is the scoring engine. There are no API/controller
+integration tests, component tests, or end-to-end tests yet (see
 [Future improvements](#future-improvements-not-yet-implemented)).
 
 ## CI/CD
@@ -212,9 +213,8 @@ there is no automated CD pipeline yet.
 Live on **Azure App Service** (Linux) as a single service: the ASP.NET Core API
 hosts both the leaderboard endpoints and the published Blazor client. The SQLite
 file lives on the persistent `/home` share, so scores survive restarts and
-redeploys. The complete, reproducible runbook — resource creation, connection
-string, HTTPS-only, and the publish/zip/deploy commands — is in
-[DEPLOY.md](DEPLOY.md).
+redeploys. The full runbook (resource creation, connection string, HTTPS-only, and
+the publish/zip/deploy commands) is in [DEPLOY.md](DEPLOY.md).
 
 ## Performance considerations
 
@@ -309,10 +309,10 @@ overridable by environment variables (double-underscore notation).
 ## Engineering tradeoffs
 
 - **No authentication.** A typing game's leaderboard doesn't need accounts, so the
-  API is anonymous. The consequence — accepted deliberately — is that scores are
-  client-submitted and not server-verified; `[Range]` validation blocks absurd
-  values but not a plausible fake. Real anti-cheat would require server-side
-  gameplay validation or auth, which is out of scope for this piece.
+  API is anonymous. The trade-off, which I took on purpose, is that scores are
+  client-submitted and not server-verified. `[Range]` validation blocks absurd
+  values but won't catch a plausible fake. Real anti-cheat would mean server-side
+  gameplay validation or auth, and that's out of scope here.
 - **SQLite over a managed SQL service.** Zero-cost, zero-ops, and ideal for a
   single-instance portfolio app, at the cost of horizontal scalability (see below).
 - **Migrate-on-startup.** Convenient for a one-instance deploy; a controlled
@@ -322,7 +322,7 @@ overridable by environment variables (double-underscore notation).
 
 ## Known limitations
 
-These are real gaps, listed so the scope is unambiguous:
+The gaps, spelled out so the scope is clear:
 
 - Scores are **not authenticated or server-verified** (spoofable by design).
 - **SQLite is single-node** — the app cannot currently scale out to multiple App
@@ -340,7 +340,7 @@ These are real gaps, listed so the scope is unambiguous:
 
 ## Future improvements (not yet implemented)
 
-Prioritised, and clearly separate from what exists today:
+Roughly in priority order. None of these exist yet:
 
 1. **API integration tests** with `WebApplicationFactory`, plus bUnit component
    tests and a Playwright E2E happy-path; publish coverage from CI.

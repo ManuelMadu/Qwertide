@@ -61,7 +61,11 @@ app.UseCors(ClientCors);
 app.UseAuthorization();
 
 app.MapControllers();
-// Any non-API route falls through to the SPA entry point so client-side
+// Unmatched API routes must return a real 404 instead of falling through to the
+// SPA shell below, which would answer 200 with index.html and surface on the
+// client as a confusing JSON parse error.
+app.MapFallback("api/{**rest}", () => Results.NotFound());
+// Any other (non-API) route falls through to the SPA entry point so client-side
 // routing (/play, /results, /leaderboard) works on a full-page load.
 app.MapFallbackToFile("index.html");
 

@@ -25,7 +25,11 @@
 
         <div class="q-result-grid q-rise-2">
             <div class="q-result-cell">
-                <div class="big">@Result.Wpm<span class="unit">wpm</span></div>
+                <div class="big">@NetWpm.ToString("0")<span class="unit">net</span></div>
+                <div class="cap">speed × accuracy · ranks you</div>
+            </div>
+            <div class="q-result-cell">
+                <div class="big neutral">@Result.Wpm<span class="unit">wpm</span></div>
                 <div class="cap">gross words / min</div>
             </div>
             <div class="q-result-cell">
@@ -76,6 +80,9 @@
     private string _name = "";
     private bool _saving;
     private bool _saved;
+
+    // The leaderboard ranks on net WPM; show the player the same number they'll place by.
+    private double NetWpm => Qwertide.Client.Services.TypingSession.NetWpmFor(Result.Wpm, Result.Accuracy);
 
     private async Task Save()
     {

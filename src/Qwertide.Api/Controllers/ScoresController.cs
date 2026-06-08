@@ -8,7 +8,7 @@ namespace Qwertide.Api.Controllers;
 
 /// <summary>
 /// Leaderboard endpoints (PDD §6):
-///   GET  /api/scores?top=10  - top N entries by WPM, then accuracy
+///   GET  /api/scores?top=10  - top N entries by net WPM (speed x accuracy)
 ///   POST /api/scores         - submit a new score
 /// </summary>
 [ApiController]
@@ -26,8 +26,11 @@ public sealed class ScoresController : ControllerBase
     {
         top = Math.Clamp(top, 1, MaxTop);
 
+        // Rank by net WPM (speed x accuracy). NetWpm is [NotMapped] so it can't be
+        // translated to SQL; ordering on Wpm * Accuracy is monotonic to it and runs
+        // in the database. Accuracy then duration break ties.
         var scores = await _db.Scores
-            .OrderByDescending(s => s.Wpm)
+            .OrderByDescending(s => s.Wpm * s.Accuracy)
             .ThenByDescending(s => s.Accuracy)
             .ThenBy(s => s.DurationSecs)
             .Take(top)

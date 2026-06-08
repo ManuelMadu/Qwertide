@@ -10,6 +10,7 @@
         <div>
             <div class="q-eyebrow">top runs</div>
             <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);">The high tide.</h1>
+            <p style="color:var(--text-faint);font-size:0.82rem;margin-top:6px;">ranked by net wpm — raw speed weighted by accuracy.</p>
         </div>
         <button class="q-btn q-btn-primary" @onclick='() => Nav.NavigateTo("play?d=1")'>take a run</button>
     </div>
@@ -38,6 +39,7 @@
                 <tr>
                     <th class="q-rank">#</th>
                     <th>player</th>
+                    <th class="num">net</th>
                     <th class="num">wpm</th>
                     <th class="num">acc</th>
                     <th class="num">when</th>
@@ -51,7 +53,8 @@
                     <tr class="@(s.Id == Result.LastSavedScoreId ? "is-you" : null)">
                         <td class="q-rank @(rank <= 3 ? "top" : null)">@rank</td>
                         <td>@s.PlayerName</td>
-                        <td class="num q-wpm">@s.Wpm</td>
+                        <td class="num q-wpm">@s.NetWpm.ToString("0")</td>
+                        <td class="num" style="color:var(--text-faint);">@s.Wpm</td>
                         <td class="num">@s.Accuracy.ToString("0.0")%</td>
                         <td class="num" style="color:var(--text-faint);">@Ago(s.CreatedAtUtc)</td>
                     </tr>

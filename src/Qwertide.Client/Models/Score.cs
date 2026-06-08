@@ -13,4 +13,7 @@ public sealed class Score
     public double DurationSecs { get; set; }
     public int? PassageId { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Speed weighted by accuracy - the leaderboard's ranking metric.</summary>
+    public double NetWpm => Wpm * Accuracy / 100.0;
 }

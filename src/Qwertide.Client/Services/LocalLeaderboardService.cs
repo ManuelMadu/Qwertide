@@ -53,7 +53,7 @@ public sealed class LocalLeaderboardService : ILeaderboardService
     public async Task<IReadOnlyList<Score>> GetTopAsync(int top = 10)
     {
         var all = await LoadAsync();
-        return all.OrderByDescending(s => s.Wpm).ThenByDescending(s => s.Accuracy).Take(top).ToList();
+        return all.OrderByDescending(s => s.NetWpm).ThenByDescending(s => s.Accuracy).Take(top).ToList();
     }
 
     public async Task<Score> SubmitAsync(Score score)

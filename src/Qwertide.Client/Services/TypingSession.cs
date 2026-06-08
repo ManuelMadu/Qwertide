@@ -33,6 +33,13 @@ public sealed class TypingSession
     /// <summary>Accuracy as a percentage 0-100. Guards zero keystrokes.</summary>
     public double Accuracy => AccuracyFor(CorrectKeystrokes, TotalKeystrokes);
 
+    /// <summary>
+    /// Net WPM: gross speed scaled by accuracy. This is what the leaderboard ranks
+    /// on, so racing through a passage on wrong keys (high gross WPM, low accuracy)
+    /// no longer beats a slower, accurate run.
+    /// </summary>
+    public double NetWpm => NetWpmFor(GrossWpm, Accuracy);
+
     public int ErrorCount => TotalKeystrokes - CorrectKeystrokes;
 
     /// <summary>Feed the live state computed by the component each input tick.</summary>
@@ -65,6 +72,22 @@ public sealed class TypingSession
         }
 
         return (double)correctKeystrokes / totalKeystrokes * 100.0;
+    }
+
+    /// <summary>
+    /// Net WPM = gross WPM weighted by accuracy. <paramref name="accuracy"/> is a
+    /// percentage 0-100. Returns 0 when either input is non-positive (an empty or
+    /// zero-time run earns nothing). A 130 WPM run at 55% accuracy nets 71.5; a
+    /// 95 WPM run at 99% nets 94.1 - so the careful typist ranks above the masher.
+    /// </summary>
+    public static double NetWpmFor(double grossWpm, double accuracy)
+    {
+        if (grossWpm <= 0 || accuracy <= 0)
+        {
+            return 0;
+        }
+
+        return grossWpm * (accuracy / 100.0);
     }
 
     /// <summary>

@@ -22,6 +22,9 @@ jobs:
       - name: Restore
         run: dotnet restore Qwertide.sln
 
+      - name: Verify formatting
+        run: dotnet format Qwertide.sln --verify-no-changes --no-restore
+
       - name: Build
         run: dotnet build Qwertide.sln --configuration Release --no-restore -warnaserror
 

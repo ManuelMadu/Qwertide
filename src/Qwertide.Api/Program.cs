@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Qwertide.Api.Data;
 
@@ -15,6 +17,24 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()));
+
+// Throttle score submissions per client IP so the public POST endpoint can't be
+// scripted to flood the leaderboard. Partitioning by IP means one abuser is
+// limited without locking everyone else out. Client IP comes from the forwarded
+// headers processed below, so behind Azure's proxy this is the real caller.
+const string SubmitRateLimit = "submit";
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(SubmitRateLimit, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+});
 
 builder.Services.AddDbContext<QwertideDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Qwertide")));
@@ -40,16 +60,34 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Trust the X-Forwarded-* headers Azure App Service's load balancer sets, so
-// the app sees the original HTTPS scheme instead of looping on redirect behind
-// the TLS-terminating proxy.
-var forwardedHeaders = new ForwardedHeadersOptions
+// Baseline security response headers on every response (incl. static files):
+// stop MIME-sniffing, deny framing (clickjacking), and don't leak the referrer.
+app.Use(async (context, next) =>
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
-};
-forwardedHeaders.KnownNetworks.Clear();
-forwardedHeaders.KnownProxies.Clear();
-app.UseForwardedHeaders(forwardedHeaders);
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "no-referrer";
+    await next();
+});
+
+if (app.Environment.IsProduction())
+{
+    // Behind Azure App Service the TLS-terminating proxy sets X-Forwarded-*; trust
+    // them so the app sees the original HTTPS scheme (and real client IP) instead
+    // of looping on redirect. App Service is the only ingress, so clearing the
+    // known-proxy list is safe here - but only here, hence the production gate.
+    var forwardedHeaders = new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    };
+    forwardedHeaders.KnownNetworks.Clear();
+    forwardedHeaders.KnownProxies.Clear();
+    app.UseForwardedHeaders(forwardedHeaders);
+
+    // Tell browsers to stay on HTTPS for this host on future visits.
+    app.UseHsts();
+}
 
 app.UseHttpsRedirection();
 
@@ -58,6 +96,7 @@ app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseCors(ClientCors);
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Qwertide.Api.Data;
 using Qwertide.Api.Models;
@@ -43,6 +44,7 @@ public sealed class ScoresController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("submit")]
     public async Task<ActionResult<Score>> Submit([FromBody] ScoreRequest request)
     {
         var score = new Score

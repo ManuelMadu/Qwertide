@@ -39,6 +39,11 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddDbContext<QwertideDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Qwertide")));
 
+// Liveness/readiness probe at /health that also verifies the database connection,
+// so a deploy or platform health check fails fast if the data store is unreachable.
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<QwertideDbContext>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -99,6 +104,7 @@ app.UseCors(ClientCors);
 app.UseRateLimiter();
 app.UseAuthorization();
 
+app.MapHealthChecks("/health");
 app.MapControllers();
 // Unmatched API routes must return a real 404 instead of falling through to the
 // SPA shell below, which would answer 200 with index.html and surface on the

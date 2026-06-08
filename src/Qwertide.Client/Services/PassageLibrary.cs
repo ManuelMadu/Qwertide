@@ -52,7 +52,11 @@ public sealed class PassageLibrary
     public Passage Random(Difficulty difficulty)
     {
         var pool = _passages.Where(p => p.Difficulty == difficulty).ToArray();
-        if (pool.Length == 0) pool = _passages;
+        if (pool.Length == 0)
+        {
+            pool = _passages;
+        }
+
         return pool[_rng.Next(pool.Length)];
     }
 

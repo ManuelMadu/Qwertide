@@ -11,8 +11,7 @@ then saves your run to a leaderboard backed by a real API.
 The front-end and game loop are all **Blazor WebAssembly**. The scoring is pure C#;
 the only JavaScript is a 22-line helper that positions the caret. The leaderboard
 runs on an **ASP.NET Core Web API** with **EF Core and SQLite** behind it. In
-production the two ship together as one **Azure App Service**. I built it as a
-portfolio piece for a junior C#/.NET role, and tried to keep it small but
+production the two ship together as one **Azure App Service**. I kept it small but
 production-minded rather than a pile of half-finished features.
 
 ---
